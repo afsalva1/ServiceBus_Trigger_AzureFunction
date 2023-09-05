@@ -1,0 +1,26 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool: 'Build'
+
+steps:
+- task: AzureCLI@2
+  displayName: Build and push container image
+  inputs:
+    azureSubscription: LH Sandbox MG
+    scriptType: 'ps'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      az account set --subscription "LH-Sandbox-Dev-001"
+      az acr build --resource-group SoftwareDev --registry SoftwareDevContainerRegistry --image ftpcopy:$(Build.SourceVersion) --image ftpcopy:latest --file data_2/Dockerfile data_2 --no-logs
+    useGlobalConfig: true
+- task: AzureFunctionAppContainer@1
+  inputs:
+    azureSubscription: LH Sandbox Subscription
+    appName: copyftpfiles-test
+    imageName: 'softwaredevcontainerregistry.azurecr.io/ftpcopy:latest'
